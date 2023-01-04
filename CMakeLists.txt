@@ -29,6 +29,7 @@ add_executable(ps4_webdav_client
   source/lang.cpp
   source/main.cpp
   source/orbis_jbc.c
+  source/rtc.cpp
   source/windows.cpp
   source/webdavclient.cpp
   source/imgui_draw.cpp
@@ -44,7 +45,6 @@ add_self(ps4_webdav_client)
 add_pkg(ps4_webdav_client ${CMAKE_SOURCE_DIR}/data "WDVC00001" "PS4 WebDAV Client" "01.00" 32 0)
 
 target_link_libraries(ps4_webdav_client
-  dbglogger
   c
   c++
   png

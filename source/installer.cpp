@@ -16,7 +16,7 @@
 #include "windows.h"
 #include "lang.h"
 #include "urn.hpp"
-#include "dbglogger.h"
+
 #define BGFT_HEAP_SIZE (1 * 1024 * 1024)
 
 static OrbisBgftInitParams s_bgft_init_params;
@@ -98,7 +98,6 @@ namespace INSTALLER
 		int ret;
 		char filepath[2000];
 		sprintf(filepath, "%s%s", webdav_settings->server, curl_unescape(ffilename, strlen(ffilename)));
-		dbglogger_log("url=%s", filepath);
 		std::string cid = std::string((char *)header->pkg_content_id);
 		cid = cid.substr(cid.find_first_of("-") + 1, 9);
 		int user_id;

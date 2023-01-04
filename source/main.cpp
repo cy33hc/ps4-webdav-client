@@ -11,7 +11,7 @@
 #include <orbis/Pad.h>
 #include <orbis/AudioOut.h>
 #include <orbis/Net.h>
-#include <dbglogger.h>
+//#include <dbglogger.h>
 
 #include "imgui.h"
 #include "SDL2/SDL.h"
@@ -22,6 +22,7 @@
 #include "gui.h"
 #include "util.h"
 #include "installer.h"
+#include "rtc.h"
 
 extern "C"
 {
@@ -198,8 +199,8 @@ static void terminate()
 
 int main()
 {
-	dbglogger_init();
-	dbglogger_log("If you see this you've set up dbglogger correctly.");
+	//dbglogger_init();
+	//dbglogger_log("If you see this you've set up dbglogger correctly.");
 	int rc;
 	// No buffering
 	setvbuf(stdout, NULL, _IONBF, 0);
@@ -275,6 +276,10 @@ int main()
 	{
 		terminate();
 	}
+
+	if (load_rtc_module() != 0)
+		return 0;
+
 	atexit(terminate);
 
 	GUI::RenderLoop(renderer);

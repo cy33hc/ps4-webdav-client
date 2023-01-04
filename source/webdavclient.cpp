@@ -12,24 +12,12 @@
 #include "webdavclient.h"
 #include "windows.h"
 #include "util.h"
-#include <dbglogger.h>
+#include "rtc.h"
 
 #define MIN(X, Y) (((X) < (Y)) ? (X) : (Y))
 
-static const char *months[12] = {
-	"Jan",
-	"Feb",
-	"Mar",
-	"Apr",
-	"May",
-	"Jun",
-	"Jul",
-	"Aug",
-	"Sep",
-	"Oct",
-	"Nov",
-	"Dec",
-};
+static const char *months[12] = {"Jan", "Feb", "Mar", "Apr", "May", "Jun", "Jul", "Aug", "Sep", "Oct", "Nov", "Dec"};
+
 namespace WebDAV
 {
 
@@ -37,7 +25,6 @@ namespace WebDAV
 	{
 		int64_t *bytes_transfered = (int64_t *)context;
 		*bytes_transfered = reinterpret_cast<int64_t>(dlnow);
-		dbglogger_log("dltotal=%lu, dlnow=%lu, ultotal=%lu, ulnow=%lu, bytes_transfered=%lu", dltotal, dlnow, ultotal, ulnow, *bytes_transfered);
 		return 0;
 	}
 
@@ -45,7 +32,6 @@ namespace WebDAV
 	{
 		int64_t *bytes_transfered = (int64_t *)context;
 		*bytes_transfered = reinterpret_cast<int64_t>(ulnow);
-		dbglogger_log("dltotal=%lu, dlnow=%lu, ultotal=%lu, ulnow=%lu, bytes_transfered%lu", dltotal, dlnow, ultotal, ulnow, *bytes_transfered);
 		return 0;
 	}
 
@@ -63,7 +49,6 @@ namespace WebDAV
 				url = url.substr(0, root_folder_pos);
 			}
 		}
-		dbglogger_log("url=%s, root=%s, user=%s, pass=%s", url.c_str(), root_folder.c_str(), user, pass);
 		WebDAV::dict_t options = {
 			{"webdav_hostname", url},
 			{"webdav_root", root_folder},
@@ -296,6 +281,32 @@ namespace WebDAV
 				sprintf(entry.display_size, "%s", lang_strings[STR_FOLDER]);
 			}
 
+			char modified_date[32];
+			char *p_char = NULL;
+			sprintf(modified_date, "%s", WebDAV::get(files[i], "modified").c_str());
+			p_char = strchr(modified_date, ' ');
+			if (p_char)
+			{
+				OrbisDateTime gmt;
+				OrbisDateTime lt;
+				char month[5];
+				sscanf(p_char, "%hd %s %hd %hd:%hd:%hd", &gmt.day, month, &gmt.year, &gmt.hour, &gmt.minute, &gmt.second);
+				for (int k=0; k <12; k++)
+				{
+					if (strcmp(month, months[k]) == 0)
+					{
+						gmt.month = k+1;
+						break;
+					}
+				}
+				convertUtcToLocalTime(&gmt, &lt);
+				entry.modified.day = lt.day;
+				entry.modified.month = lt.month;
+				entry.modified.year = lt.year;
+				entry.modified.hours = lt.hour;
+				entry.modified.minutes = lt.minute;
+				entry.modified.seconds = lt.second;
+			}
 			out.push_back(entry);
 		}
 
@@ -317,7 +328,7 @@ namespace WebDAV
 		char *buffer_ptr = nullptr;
 		unsigned long long buffer_size = 0;
 
-		bool ret = client->download_range_to(path, buffer_ptr, buffer_size, 0, len-1);
+		bool ret = client->download_range_to(path, buffer_ptr, buffer_size, 0, len - 1);
 		if (!ret || buffer_size != len)
 		{
 			return 0;
