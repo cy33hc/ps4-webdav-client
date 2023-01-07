@@ -254,7 +254,7 @@ namespace WebDAV
 			}
 
 			std::string resource_type = WebDAV::get(files[i], "type");
-			entry.isDir = resource_type == "d:collection" || resource_type == "D:collection";
+			entry.isDir = resource_type.find("collection") != std::string::npos;
 			entry.file_size = 0;
 			if (!entry.isDir)
 			{
