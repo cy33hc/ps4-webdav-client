@@ -92,6 +92,7 @@ namespace WebDAV
       this->set(CURLOPT_USERPWD, const_cast<char *>(token.c_str()));
     }
     this->set(CURLOPT_SOCKOPTFUNCTION, sockopt_callback);
+    this->set(CURLOPT_FOLLOWLOCATION, 1);
 
     if (!this->proxy_enabled())
       return;
