@@ -23,6 +23,7 @@ add_executable(ps4_webdav_client
   source/config.cpp
   source/fs.cpp
   source/gui.cpp
+  source/getentropy.c
   source/ime_dialog.cpp
   source/inifile.c
   source/installer.cpp
@@ -53,9 +54,8 @@ target_link_libraries(ps4_webdav_client
   SDL2
   samplerate
   jbc
-  mbedcrypto
-  mbedtls
-  mbedx509
+  crypto
+  ssl
   curl
   kernel
   SceShellCoreUtil

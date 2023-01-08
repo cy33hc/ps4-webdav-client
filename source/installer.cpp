@@ -153,6 +153,7 @@ namespace INSTALLER
 			goto err;
 		}
 
+		Util::Notify("%s queued", ffilename);
 		return 1;
 
 	err:
@@ -209,6 +210,7 @@ namespace INSTALLER
 			goto err;
 		}
 
+		Util::Notify("%s queued", filename);
 		return 1;
 
 	err:

@@ -4,6 +4,8 @@
 #include <string>
 #include <vector>
 #include <algorithm>
+#include <stdarg.h>
+#include <orbis/libkernel.h>
 
 namespace Util
 {
@@ -42,6 +44,22 @@ namespace Util
                        [](unsigned char c)
                        { return std::tolower(c); });
         return s;
+    }
+
+    static inline void Notify(const char *fmt, ...)
+    {
+        OrbisNotificationRequest request;
+
+        va_list args;
+        va_start(args, fmt);
+        vsprintf(request.message, fmt, args);
+        va_end(args);
+
+        request.type = OrbisNotificationRequestType::NotificationRequest;
+        request.unk3 = 0;
+        request.useIconImageUri = 0;
+        request.targetId = -1;
+        sceKernelSendNotificationRequest(0, &request, sizeof(request), 0);
     }
 
 }
