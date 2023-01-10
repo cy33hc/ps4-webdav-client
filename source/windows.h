@@ -198,6 +198,7 @@ namespace Windows
     void AfterFolderNameCallback(int ime_result);
     void CancelActionCallBack(int ime_result);
     void AfterPackageUrlCallback(int ime_result);
+    void AfterFavoriteUrlCallback(int ime_result);
 }
 
 #endif

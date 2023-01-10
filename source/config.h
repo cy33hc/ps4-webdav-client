@@ -51,12 +51,13 @@ extern char language[128];
 extern WebDavSettings *webdav_settings;
 extern WebDAV::WebDavClient *webdavclient;
 extern char install_pkg_url[512];
-extern std::vector<char*> favorite_urls;
+extern char favorite_urls[MAX_FAVORITE_URLS][512];
 
 namespace CONFIG
 {
     void LoadConfig();
     void SaveConfig();
+    void SaveFavoriteUrl(int index, char *url);
     void RemoveFromMultiValues(std::vector<std::string> &multi_values, std::string value);
     void ParseMultiValueString(const char *prefix_list, std::vector<std::string> &prefixes, bool toLower);
     std::string GetMultiValueString(std::vector<std::string> &multi_values);

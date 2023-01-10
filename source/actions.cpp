@@ -772,9 +772,10 @@ namespace Actions
     
         if (BE32(header.pkg_magic) == PKG_MAGIC)
         {
-            if (INSTALLER::InstallUrlPkg(install_pkg_url, &header) == 0)
+            int ret;
+            if ((ret = INSTALLER::InstallUrlPkg(install_pkg_url, &header)) != 1)
             {
-                sprintf(status_message, "%s", lang_strings[STR_FAILED]);
+                sprintf(status_message, "%s %08X", lang_strings[STR_FAILED], ret);
             }
         }
     }

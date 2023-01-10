@@ -23,7 +23,7 @@ char language[128];
 std::vector<std::string> sites;
 std::map<std::string, WebDavSettings> site_settings;
 char install_pkg_url[512];
-std::vector<char*> favorite_urls;
+char favorite_urls[MAX_FAVORITE_URLS][512];
 
 namespace CONFIG
 {
@@ -73,11 +73,9 @@ namespace CONFIG
 
         for (int i = 0; i < MAX_FAVORITE_URLS; i++)
         {
-            char url[512];
             const char *index = std::to_string(i).c_str();
-            sprintf(url, "%s", ReadString(CONFIG_FAVORITE_URLS, index, ""));
-            WriteString(CONFIG_FAVORITE_URLS, index, url);
-            favorite_urls.push_back(url);
+            sprintf(favorite_urls[i], "%s", ReadString(CONFIG_FAVORITE_URLS, index, ""));
+            WriteString(CONFIG_FAVORITE_URLS, index, favorite_urls[i]);
         }
 
         WriteIniFile(CONFIG_INI_FILE);
@@ -92,6 +90,15 @@ namespace CONFIG
         WriteString(last_site, CONFIG_WEBDAV_SERVER_USER, webdav_settings->username);
         WriteString(last_site, CONFIG_WEBDAV_SERVER_PASSWORD, webdav_settings->password);
         WriteString(CONFIG_GLOBAL, CONFIG_LAST_SITE, last_site);
+        WriteIniFile(CONFIG_INI_FILE);
+        CloseIniFile();
+    }
+
+    void SaveFavoriteUrl(int index, char *url)
+    {
+        OpenIniFile(CONFIG_INI_FILE);
+        const char *idx = std::to_string(index).c_str();
+        WriteString(CONFIG_FAVORITE_URLS, idx, url);
         WriteIniFile(CONFIG_INI_FILE);
         CloseIniFile();
     }

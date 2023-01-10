@@ -86,7 +86,11 @@ char lang_strings[LANG_STRINGS_NUM][LANG_STR_SIZE] = {
 	"Package not in the /data or /mnt/usbX folder",					  // STR_INSTALL_FROM_DATA_MSG
 	"Package is already installed",									  // STR_ALREADY_INSTALLED_MSG
 	"Install from URL",												  // STR_INSTALL_FROM_URL
-	"Could not read package header info"							  // STR_CANNOT_READ_PKG_HDR_MSG
+	"Could not read package header info",							  // STR_CANNOT_READ_PKG_HDR_MSG
+	"Favorite URLs",												  // STR_FAVORITE_URLS
+	"Slot",															  // STR_SLOT
+	"Edit",															  // STR_EDIT
+	"One Time Url"													  // STR_ONETIME_URL
 };
 
 bool needs_extended_font = false;

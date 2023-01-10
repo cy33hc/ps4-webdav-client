@@ -162,7 +162,7 @@ namespace INSTALLER
 		return 1;
 
 	err:
-		return 0;
+		return ret;
 	}
 
 	int InstallLocalPkg(const char *filename, pkg_header *header)

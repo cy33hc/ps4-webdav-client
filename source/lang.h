@@ -80,7 +80,11 @@
 	FUNC(STR_INSTALL_FROM_DATA_MSG)      \
 	FUNC(STR_ALREADY_INSTALLED_MSG)      \
 	FUNC(STR_INSTALL_FROM_URL)           \
-	FUNC(STR_CANNOT_READ_PKG_HDR_MSG)
+	FUNC(STR_CANNOT_READ_PKG_HDR_MSG)    \
+	FUNC(STR_FAVORITE_URLS)              \
+	FUNC(STR_SLOT)                       \
+	FUNC(STR_EDIT)                       \
+	FUNC(STR_ONETIME_URL)
 
 #define GET_VALUE(x) x,
 #define GET_STRING(x) #x,
@@ -90,7 +94,7 @@ enum
 	FOREACH_STR(GET_VALUE)
 };
 
-#define LANG_STRINGS_NUM 77
+#define LANG_STRINGS_NUM 81
 #define LANG_ID_SIZE LANG_STRINGS_NUM
 #define LANG_STR_SIZE 256
 extern char lang_identifiers[LANG_STRINGS_NUM][LANG_ID_SIZE];
