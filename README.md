@@ -31,18 +31,6 @@ TouchPad Button - Exit Application
 
 **HELP - Need new translations for the added strings. Please help update the languages files. Use the [English.ini](https://github.com/cy33hc/ps4-webdav-client/blob/master/data/assets/langs/English.ini) for reference**
 
-**No need for "Remote Package Installer" homebrew and "Remote Package Sender" from PC.**
-
-Example: If you share the folder C:\MyShare for SMB, then also make sure the C:\MyShare is the root folder for the HTTP Server.
-
-**HTTP Servers known to work with RPI.**
-
-[Leefull's exploit host](https://github.com/Leeful/leeful.github.io/blob/master/Exploit%20Host%20Server%20v1.2.exe) Place the "Exploit Host Server v1.2.exe" into the SMB share folder and execute.
-
-Microsoft IIS
-
-[npx serve](https://www.npmjs.com/package/serve)
-
 ## Multi Language Support
 The appplication support following languages
 
