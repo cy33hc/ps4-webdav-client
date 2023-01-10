@@ -153,7 +153,7 @@ namespace INSTALLER
 			goto err;
 		}
 
-		Util::Notify("%s queued", ffilename);
+		Util::Notify("%s queued", cid.c_str());
 		return 1;
 
 	err:

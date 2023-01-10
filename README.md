@@ -10,6 +10,9 @@ Tested with following:
  - 4shared.com
  - drivehq.com
 
+## Remote Package Installer Feature
+Remote Package Installation only works if the WebDAV server allow anonymous access. It's a limitation of the PS4 Installer not able to access protected links.
+
 ![Preview](/screenshot.jpg)
 
 ## Installation
@@ -25,9 +28,6 @@ R1 - Navigate to the Remote list of files
 L1 - Navigate to the Local list of files
 TouchPad Button - Exit Application
 ```
-
-## Remote Package Installer Feature
-Remote Package Installation is supported only if the WebDAV server allow anonymous access.
 
 **HELP - Need new translations for the added strings. Please help update the languages files. Use the [English.ini](https://github.com/cy33hc/ps4-webdav-client/blob/master/data/assets/langs/English.ini) for reference**
 
