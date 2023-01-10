@@ -8,9 +8,19 @@
 #include "lang.h"
 #include "actions.h"
 #include "installer.h"
+#include "request.hpp"
+#include "callback.hpp"
+#include "urn.hpp"
 
 namespace Actions
 {
+
+	static int HeadCallback(void *context, curl_off_t dltotal, curl_off_t dlnow, curl_off_t ultotal, curl_off_t ulnow)
+	{
+		if (dlnow > sizeof(pkg_header))
+            return CURL_ERROR_SIZE;
+		return 0;
+	}
 
     void RefreshLocalFiles(bool apply_filter)
     {
@@ -715,6 +725,57 @@ namespace Actions
             activity_inprogess = false;
             multi_selected_local_files.clear();
             Windows::SetModalMode(false);
+        }
+    }
+
+    void InstallUrlPkg()
+    {
+        sprintf(status_message, "%s", "");
+        pkg_header header;
+        WebDAV::Data data = {nullptr, 0, 0};
+        WebDAV::Request request = WebDAV::Request(WebDAV::dict_t());
+        memset(&header, 0, sizeof(header));
+
+        std::string full_url = std::string(install_pkg_url);
+        if (full_url.find_first_of(" ") != std::string::npos)
+        {
+            size_t scheme_pos = full_url.find_first_of("://");
+            size_t path_pos = full_url.find_first_of("/", scheme_pos+3);
+            std::string host = full_url.substr(0, path_pos);
+            auto path = WebDAV::Urn::Path(full_url.substr(path_pos));
+            full_url = host + path.quote(request.handle);
+            sprintf(install_pkg_url, "%s", full_url.c_str());
+        }
+
+        struct curl_slist *list = NULL;
+        char range_header[64];
+        sprintf(range_header, "Range: bytes=%d-%lu", 0, sizeof(header)-1);
+        list = curl_slist_append(list, range_header);
+        request.set(CURLOPT_CUSTOMREQUEST, "GET");
+        request.set(CURLOPT_URL, install_pkg_url);
+        request.set(CURLOPT_HEADER, 0L);
+        request.set(CURLOPT_HTTPHEADER, list);
+        request.set(CURLOPT_WRITEDATA, reinterpret_cast<size_t>(&data));
+        request.set(CURLOPT_WRITEFUNCTION, reinterpret_cast<size_t>(WebDAV::Callback::Append::buffer));
+        request.set(CURLOPT_XFERINFOFUNCTION, HeadCallback);
+        request.set(CURLOPT_NOPROGRESS, 0L);
+
+        bool is_performed = request.perform();
+        int s = sizeof(pkg_header);
+
+        if (data.size < s)
+        {
+            sprintf(status_message, "%s", lang_strings[STR_CANNOT_READ_PKG_HDR_MSG]);
+            return;
+        }
+        memcpy(&header, data.buffer, s);
+    
+        if (BE32(header.pkg_magic) == PKG_MAGIC)
+        {
+            if (INSTALLER::InstallUrlPkg(install_pkg_url, &header) == 0)
+            {
+                sprintf(status_message, "%s", lang_strings[STR_FAILED]);
+            }
         }
     }
 

@@ -36,7 +36,8 @@ enum ACTIONS
     ACTION_DISCONNECT_WEBDAV,
     ACTION_DISCONNECT_WEBDAV_AND_EXIT,
     ACTION_INSTALL_REMOTE_PKG,
-    ACTION_INSTALL_LOCAL_PKG
+    ACTION_INSTALL_LOCAL_PKG,
+    ACTION_INSTALL_URL_PKG
 };
 
 enum OverWriteType
@@ -77,6 +78,7 @@ namespace Actions
     void InstallRemotePkgs();
     void *InstallLocalPkgsThread(void *argp);
     void InstallLocalPkgs();
+    void InstallUrlPkg();
 }
 
 #endif

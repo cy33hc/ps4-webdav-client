@@ -12,6 +12,12 @@ Tested with following:
 
 ![Preview](/screenshot.jpg)
 
+## Features ##
+ - Transfer files back and forth between PS4 and WebDAV server
+ - Install packages from connected WebDAV server
+ - Install packages from PS4 local drive
+ - Install package from any URL
+
 ## Installation
 Copy the **ps4_webdav_client.pkg** in to a FAT32 format usb drive then install from package installer
 

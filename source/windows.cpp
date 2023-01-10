@@ -642,7 +642,7 @@ namespace Windows
         {
             ImGui::SetNextWindowPos(ImVec2(1330, 350));
         }
-        ImGui::SetNextWindowSizeConstraints(ImVec2(230, 150), ImVec2(230, 350), NULL, NULL);
+        ImGui::SetNextWindowSizeConstraints(ImVec2(230, 150), ImVec2(230, 400), NULL, NULL);
         if (ImGui::BeginPopupModal(lang_strings[STR_ACTIONS], NULL, ImGuiWindowFlags_AlwaysAutoResize))
         {
             ImGui::PushID("Select All##settings");
@@ -779,6 +779,22 @@ namespace Windows
                 ImGui::PopID();
                 ImGui::Separator();
             }
+
+            ImGui::PushID("InstallFromUrl##both");
+            if (ImGui::Selectable(lang_strings[STR_INSTALL_FROM_URL], false, ImGuiSelectableFlags_DontClosePopups, ImVec2(220, 0)))
+            {
+                SetModalMode(false);
+                ResetImeCallbacks();
+                ime_single_field = install_pkg_url;
+                ime_field_size = 511;
+                ime_after_update = AfterPackageUrlCallback;
+                ime_callback = SingleValueImeCallback;
+                Dialog::initImeDialog("URL", install_pkg_url, 511, ORBIS_TYPE_BASIC_LATIN, 660, 340);
+                gui_mode = GUI_MODE_IME;
+                ImGui::CloseCurrentPopup();
+            }
+            ImGui::PopID();
+            ImGui::Separator();
 
             flags = ImGuiSelectableFlags_Disabled;
             if (local_browser_selected || remote_browser_selected)
@@ -1150,6 +1166,10 @@ namespace Windows
             Actions::InstallLocalPkgs();
             selected_action = ACTION_NONE;
             break;
+        case ACTION_INSTALL_URL_PKG:
+            Actions::InstallUrlPkg();
+            selected_action = ACTION_NONE;
+            break;
         default:
             break;
         }
@@ -1241,6 +1261,11 @@ namespace Windows
     void AfterRemoteFileChangesCallback(int ime_result)
     {
         selected_action = ACTION_REFRESH_REMOTE_FILES;
+    }
+
+    void AfterPackageUrlCallback(int ime_result)
+    {
+        selected_action = ACTION_INSTALL_URL_PKG;
     }
 
     void AfterFolderNameCallback(int ime_result)

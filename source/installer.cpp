@@ -93,11 +93,16 @@ namespace INSTALLER
 		s_bgft_initialized = false;
 	}
 
-	int InstallRemotePkg(const char *ffilename, pkg_header *header)
+	int InstallRemotePkg(const char *filename, pkg_header *header)
+	{
+		char url[2000];
+		sprintf(url, "%s%s", webdav_settings->server, curl_unescape(filename, strlen(filename)));
+		return InstallUrlPkg(url, header);
+	}
+
+	int InstallUrlPkg(const char *url, pkg_header *header)
 	{
 		int ret;
-		char filepath[2000];
-		sprintf(filepath, "%s%s", webdav_settings->server, curl_unescape(ffilename, strlen(ffilename)));
 		std::string cid = std::string((char *)header->pkg_content_id);
 		cid = cid.substr(cid.find_first_of("-") + 1, 9);
 		int user_id;
@@ -130,7 +135,7 @@ namespace INSTALLER
 			params.userId = user_id;
 			params.entitlementType = 5;
 			params.id = (char *)header->pkg_content_id;
-			params.contentUrl = filepath;
+			params.contentUrl = url;
 			params.contentName = cid.c_str();
 			params.iconPath = "";
 			params.playgoScenarioId = "0";
@@ -153,7 +158,7 @@ namespace INSTALLER
 			goto err;
 		}
 
-		Util::Notify("%s queued", ffilename);
+		Util::Notify("%s queued", cid.c_str());
 		return 1;
 
 	err:
@@ -199,7 +204,7 @@ namespace INSTALLER
 		ret = sceBgftServiceIntDownloadRegisterTaskByStorageEx(&download_params, &task_id);
 		if (ret)
 		{
-			if (ret = 0x80990088)
+			if (ret == 0x80990088)
 				return -2;
 			goto err;
 		}

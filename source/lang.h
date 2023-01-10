@@ -10,8 +10,8 @@
 	FUNC(STR_REMOTE)                     \
 	FUNC(STR_MESSAGES)                   \
 	FUNC(STR_UPDATE_SOFTWARE)            \
-	FUNC(STR_CONNECT_WEBDAV)                \
-	FUNC(STR_DISCONNECT_WEBDAV)             \
+	FUNC(STR_CONNECT_WEBDAV)             \
+	FUNC(STR_DISCONNECT_WEBDAV)          \
 	FUNC(STR_SEARCH)                     \
 	FUNC(STR_REFRESH)                    \
 	FUNC(STR_SERVER)                     \
@@ -78,7 +78,9 @@
 	FUNC(STR_FAILED_HTTP_CHECK)          \
 	FUNC(STR_REMOTE_NOT_HTTP)            \
 	FUNC(STR_INSTALL_FROM_DATA_MSG)      \
-	FUNC(STR_ALREADY_INSTALLED_MSG)
+	FUNC(STR_ALREADY_INSTALLED_MSG)      \
+	FUNC(STR_INSTALL_FROM_URL)           \
+	FUNC(STR_CANNOT_READ_PKG_HDR_MSG)
 
 #define GET_VALUE(x) x,
 #define GET_STRING(x) #x,
@@ -88,7 +90,7 @@ enum
 	FOREACH_STR(GET_VALUE)
 };
 
-#define LANG_STRINGS_NUM 75
+#define LANG_STRINGS_NUM 77
 #define LANG_ID_SIZE LANG_STRINGS_NUM
 #define LANG_STR_SIZE 256
 extern char lang_identifiers[LANG_STRINGS_NUM][LANG_ID_SIZE];

@@ -1,7 +1,8 @@
 #include <string>
 #include <cstring>
 #include <map>
-
+#include <vector>
+#include <stdlib.h>
 #include "config.h"
 #include "fs.h"
 #include "lang.h"
@@ -21,6 +22,8 @@ char display_site[32];
 char language[128];
 std::vector<std::string> sites;
 std::map<std::string, WebDavSettings> site_settings;
+char install_pkg_url[512];
+std::vector<char*> favorite_urls;
 
 namespace CONFIG
 {
@@ -67,6 +70,15 @@ namespace CONFIG
         WriteString(CONFIG_GLOBAL, CONFIG_LAST_SITE, last_site);
 
         webdav_settings = &site_settings[std::string(last_site)];
+
+        for (int i = 0; i < MAX_FAVORITE_URLS; i++)
+        {
+            char url[512];
+            const char *index = std::to_string(i).c_str();
+            sprintf(url, "%s", ReadString(CONFIG_FAVORITE_URLS, index, ""));
+            WriteString(CONFIG_FAVORITE_URLS, index, url);
+            favorite_urls.push_back(url);
+        }
 
         WriteIniFile(CONFIG_INI_FILE);
         CloseIniFile();

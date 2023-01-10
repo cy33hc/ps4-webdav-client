@@ -5,6 +5,7 @@
 #include <vector>
 #include <algorithm>
 #include <map>
+
 #include "webdavclient.h"
 
 #define APP_ID "ps4-webdav-client"
@@ -20,6 +21,9 @@
 #define CONFIG_WEBDAV_SERVER_PASSWORD "webdav_server_password"
 #define CONFIG_WEBDAV_SERVER_SHARE "webdav_server_share"
 #define CONFIG_WEBDAV_SERVER_HTTP_PORT "webdav_server_http_port"
+
+#define CONFIG_FAVORITE_URLS "favorite_urls"
+#define MAX_FAVORITE_URLS 30
 
 #define CONFIG_LAST_SITE "last_site"
 
@@ -46,6 +50,8 @@ extern char display_site[32];
 extern char language[128];
 extern WebDavSettings *webdav_settings;
 extern WebDAV::WebDavClient *webdavclient;
+extern char install_pkg_url[512];
+extern std::vector<char*> favorite_urls;
 
 namespace CONFIG
 {
