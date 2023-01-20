@@ -194,10 +194,7 @@ namespace INSTALLER
 			download_params.params.contentName = titleId;
 			download_params.params.iconPath = "";
 			download_params.params.playgoScenarioId = "0";
-			if (remove_after_install)
-				download_params.params.option = ORBIS_BGFT_TASK_OPT_DELETE_AFTER_UPLOAD;
-			else
-				download_params.params.option = ORBIS_BGFT_TASK_OPT_DISABLE_CDN_QUERY_PARAM;
+			download_params.params.option = ORBIS_BGFT_TASK_OPT_DISABLE_CDN_QUERY_PARAM;
 			download_params.slot = 0;
 		}
 
