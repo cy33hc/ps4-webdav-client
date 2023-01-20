@@ -189,9 +189,9 @@ namespace INSTALLER
 		memset(&download_params, 0, sizeof(download_params));
 		{
 			download_params.params.entitlementType = 5;
-			download_params.params.id = "";
+			download_params.params.id = (char *)header->pkg_content_id;
 			download_params.params.contentUrl = filepath;
-			download_params.params.contentName = titleId;
+			download_params.params.contentName = (char *)header->pkg_content_id;;
 			download_params.params.iconPath = "";
 			download_params.params.playgoScenarioId = "0";
 			download_params.params.option = ORBIS_BGFT_TASK_OPT_FORCE_UPDATE;

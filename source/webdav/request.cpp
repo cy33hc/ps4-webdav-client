@@ -94,6 +94,8 @@ namespace WebDAV
     }
     this->set(CURLOPT_SOCKOPTFUNCTION, sockopt_callback);
     this->set(CURLOPT_FOLLOWLOCATION, 1);
+    this->set(CURLOPT_COOKIEJAR, "/data/ps4-webdav-client/cookies.txt");
+    this->set(CURLOPT_COOKIEFILE, "/data/ps4-webdav-client/cookies.txt");
 
     if (!this->proxy_enabled())
       return;

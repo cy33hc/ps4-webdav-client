@@ -812,9 +812,10 @@ namespace Actions
                 else if (ret == -3)
                 {
                     sprintf(activity_message, "%s", lang_strings[STR_FAIL_INSTALL_TMP_PKG_MSG]);
-                    sceKernelUsleep(3000000);
+                    sceKernelUsleep(5000000);
                 }
-                FS::Rm(filename);
+                if (ret != -3)
+                    FS::Rm(filename);
             }
         }
 

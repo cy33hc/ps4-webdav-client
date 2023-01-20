@@ -11,6 +11,7 @@
 #define APP_ID "ps4-webdav-client"
 #define DATA_PATH "/data/" APP_ID
 #define CONFIG_INI_FILE DATA_PATH "/config.ini"
+#define COOKIE_FILE DATA_PATH "/cookies.txt"
 
 #define CONFIG_GLOBAL "Global"
 
