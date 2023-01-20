@@ -9,19 +9,13 @@
 #include "actions.h"
 #include "installer.h"
 #include "request.hpp"
-#include "callback.hpp"
 #include "urn.hpp"
+#include "rtc.h"
+#include "webdavclient.h"
+#include "dbglogger.h"
 
 namespace Actions
 {
-
-	static int HeadCallback(void *context, curl_off_t dltotal, curl_off_t dlnow, curl_off_t ultotal, curl_off_t ulnow)
-	{
-		if (dlnow > sizeof(pkg_header))
-            return CURL_ERROR_SIZE;
-		return 0;
-	}
-
     void RefreshLocalFiles(bool apply_filter)
     {
         multi_selected_local_files.clear();
@@ -303,7 +297,6 @@ namespace Actions
     int UploadFile(const char *src, const char *dest)
     {
         int ret;
-        int64_t filesize;
         if (!webdavclient->Ping())
         {
             webdavclient->Quit();
@@ -378,6 +371,7 @@ namespace Actions
                 {
                     snprintf(activity_message, 1024, "%s %s", lang_strings[STR_UPLOADING], entries[i].path);
                     bytes_to_download = entries[i].file_size;
+                    bytes_transfered = 0;
                     ret = UploadFile(entries[i].path, new_path);
                     if (ret <= 0)
                     {
@@ -448,6 +442,7 @@ namespace Actions
 
     int DownloadFile(const char *src, const char *dest)
     {
+        bytes_transfered = 0;
         if (!webdavclient->Size(src, &bytes_to_download))
         {
             webdavclient->Quit();
@@ -728,55 +723,114 @@ namespace Actions
         }
     }
 
-    void InstallUrlPkg()
+    void *InstallUrlPkgThread(void *argp)
     {
+        bytes_transfered = 0;
         sprintf(status_message, "%s", "");
         pkg_header header;
-        WebDAV::Data data = {nullptr, 0, 0};
-        WebDAV::Request request = WebDAV::Request(WebDAV::dict_t());
-        memset(&header, 0, sizeof(header));
+		char filename[2000];
+		OrbisDateTime now;
+		OrbisTick tick;
+		sceRtcGetCurrentClockLocalTime(&now);
+		sceRtcGetTick(&now, &tick);
+		sprintf(filename, "%s/%lu.pkg", DATA_PATH, tick.mytick);
 
         std::string full_url = std::string(install_pkg_url);
-        if (full_url.find_first_of(" ") != std::string::npos)
-        {
-            size_t scheme_pos = full_url.find_first_of("://");
-            size_t path_pos = full_url.find_first_of("/", scheme_pos+3);
-            std::string host = full_url.substr(0, path_pos);
-            auto path = WebDAV::Urn::Path(full_url.substr(path_pos));
-            full_url = host + path.quote(request.handle);
-            sprintf(install_pkg_url, "%s", full_url.c_str());
-        }
+        size_t scheme_pos = full_url.find_first_of("://");
+        size_t path_pos = full_url.find_first_of("/", scheme_pos+3);
+        std::string host = full_url.substr(0, path_pos);
+        std::string path = full_url.substr(path_pos);
+        dbglogger_log("host=%s, path=%s", host.c_str(), path.c_str());
 
-        struct curl_slist *list = NULL;
-        char range_header[64];
-        sprintf(range_header, "Range: bytes=%d-%lu", 0, sizeof(header)-1);
-        list = curl_slist_append(list, range_header);
-        request.set(CURLOPT_CUSTOMREQUEST, "GET");
-        request.set(CURLOPT_URL, install_pkg_url);
-        request.set(CURLOPT_HEADER, 0L);
-        request.set(CURLOPT_HTTPHEADER, list);
-        request.set(CURLOPT_WRITEDATA, reinterpret_cast<size_t>(&data));
-        request.set(CURLOPT_WRITEFUNCTION, reinterpret_cast<size_t>(WebDAV::Callback::Append::buffer));
-        request.set(CURLOPT_XFERINFOFUNCTION, HeadCallback);
-        request.set(CURLOPT_NOPROGRESS, 0L);
+        WebDAV::WebDavClient *tmp_client = new WebDAV::WebDavClient();
+        tmp_client->Connect(host.c_str(), "", "0", false);
 
-        bool is_performed = request.perform();
+        sprintf(activity_message, "%s URL to %s", lang_strings[STR_DOWNLOADING], filename);
         int s = sizeof(pkg_header);
-
-        if (data.size < s)
+        memset(&header, 0, s);
+        WebDAV::dict_t response_headers{};
+        int ret = tmp_client->GetHeaders(path.c_str(), &response_headers);
+        if (!ret)
         {
-            sprintf(status_message, "%s", lang_strings[STR_CANNOT_READ_PKG_HDR_MSG]);
-            return;
+            dbglogger_log("error");
+            sprintf(status_message, "%s - %s", lang_strings[STR_FAILED], lang_strings[STR_CANNOT_READ_PKG_HDR_MSG]);
+            tmp_client->Quit();
+            delete tmp_client;
+            activity_inprogess = false;
+            Windows::SetModalMode(false);
+            return NULL;
         }
-        memcpy(&header, data.buffer, s);
-    
+
+        auto content_length = WebDAV::get(response_headers, "content-length");
+        dbglogger_log("content_length=%s", content_length.c_str());
+        if (content_length.length() > 0)
+            bytes_to_download = std::stol(content_length);
+        else
+            bytes_to_download = 1;
+        int is_performed = tmp_client->Get(filename, path.c_str());
+
+        if (is_performed == 0)
+        {
+            dbglogger_log("error after Get");
+            sprintf(status_message, "%s - %s", lang_strings[STR_FAILED], tmp_client->LastResponse());
+            tmp_client->Quit();
+            delete tmp_client;
+            activity_inprogess = false;
+            Windows::SetModalMode(false);
+            return NULL;
+        }
+        tmp_client->Quit();
+        delete tmp_client;
+
+        FILE *in = FS::OpenRead(filename);
+        if (in == NULL)
+        {
+            sprintf(status_message, "%s - Error opening temp pkg file - %s", lang_strings[STR_FAILED], filename);
+            activity_inprogess = false;
+            Windows::SetModalMode(false);
+            return NULL;
+        }
+
+        FS::Read(in, (void*)&header, s);
+        FS::Close(in);
         if (BE32(header.pkg_magic) == PKG_MAGIC)
         {
             int ret;
-            if ((ret = INSTALLER::InstallUrlPkg(install_pkg_url, &header)) != 1)
+            if ((ret = INSTALLER::InstallLocalPkg(filename, &header, true)) != 1)
             {
-                sprintf(status_message, "%s %08X", lang_strings[STR_FAILED], ret);
+                if (ret == -1)
+                {
+                    sprintf(activity_message, "%s", lang_strings[STR_INSTALL_FROM_DATA_MSG]);
+                    sceKernelUsleep(3000000);
+                }
+                else if (ret == -2)
+                {
+                    sprintf(activity_message, "%s", lang_strings[STR_ALREADY_INSTALLED_MSG]);
+                    sceKernelUsleep(3000000);
+                }
+                else if (ret == -3)
+                {
+                    sprintf(activity_message, "%s", lang_strings[STR_FAIL_DELETE_TMP_PKG_MSG]);
+                    sceKernelUsleep(5000000);
+                }
+                if (ret != -3)
+                    FS::Rm(filename);
             }
+        }
+
+        activity_inprogess = false;
+        Windows::SetModalMode(false);
+        return NULL;
+    }
+
+    void InstallUrlPkg()
+    {
+        sprintf(status_message, "%s", "");
+        int res = pthread_create(&bk_activity_thid, NULL, InstallUrlPkgThread, NULL);
+        if (res != 0)
+        {
+            activity_inprogess = false;
+            Windows::SetModalMode(false);
         }
     }
 

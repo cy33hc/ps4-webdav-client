@@ -16,6 +16,8 @@
 #include "windows.h"
 #include "lang.h"
 #include "urn.hpp"
+#include "rtc.h"
+#include "fs.h"
 
 #define BGFT_HEAP_SIZE (1 * 1024 * 1024)
 
@@ -97,11 +99,6 @@ namespace INSTALLER
 	{
 		char url[2000];
 		sprintf(url, "%s%s", webdav_settings->server, curl_unescape(filename, strlen(filename)));
-		return InstallUrlPkg(url, header);
-	}
-
-	int InstallUrlPkg(const char *url, pkg_header *header)
-	{
 		int ret;
 		std::string cid = std::string((char *)header->pkg_content_id);
 		cid = cid.substr(cid.find_first_of("-") + 1, 9);
@@ -165,10 +162,9 @@ namespace INSTALLER
 		return ret;
 	}
 
-	int InstallLocalPkg(const char *filename, pkg_header *header)
+	int InstallLocalPkg(const char *filename, pkg_header *header, bool remove_after_install)
 	{
 		int ret;
-
 		if (strncmp(filename, "/data/", 6) != 0 &&
 			strncmp(filename, "/user/data/", 11) != 0 &&
 			strncmp(filename, "/mnt/usb", 8) != 0)
@@ -187,6 +183,8 @@ namespace INSTALLER
 			return 0;
 		}
 
+		OrbisBgftTaskProgress progress_info;
+		int prog = 0;
 		OrbisBgftDownloadParamEx download_params;
 		memset(&download_params, 0, sizeof(download_params));
 		{
@@ -196,7 +194,10 @@ namespace INSTALLER
 			download_params.params.contentName = titleId;
 			download_params.params.iconPath = "";
 			download_params.params.playgoScenarioId = "0";
-			download_params.params.option = ORBIS_BGFT_TASK_OPT_DISABLE_CDN_QUERY_PARAM;
+			if (remove_after_install)
+				download_params.params.option = ORBIS_BGFT_TASK_OPT_DELETE_AFTER_UPLOAD;
+			else
+				download_params.params.option = ORBIS_BGFT_TASK_OPT_DISABLE_CDN_QUERY_PARAM;
 			download_params.slot = 0;
 		}
 
@@ -215,7 +216,22 @@ namespace INSTALLER
 			goto err;
 		}
 
-		Util::Notify("%s queued", filename);
+		if (!remove_after_install)
+		{
+			Util::Notify("%s queued", titleId);
+			return 1;
+		}
+		
+		sprintf(activity_message, "%s", lang_strings[STR_WAIT_FOR_INSTALL_MSG]);
+		while (prog < 99)
+		{
+			memset(&progress_info, 0, sizeof(progress_info));
+			ret = sceBgftServiceDownloadGetProgress(task_id, &progress_info);
+			if (ret)
+				return -3;
+			prog = (uint32_t)(((float)progress_info.transferred / progress_info.length) * 100.f);
+		}
+		FS::Rm(filename);
 		return 1;
 
 	err:

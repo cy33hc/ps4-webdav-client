@@ -31,15 +31,36 @@
 #include "util.h"
 #include <algorithm>
 #include <thread>
-
+#include "dbglogger.h"
 namespace WebDAV
 {
   using Urn::Path;
 
   using progress_funptr = int (*)(void *context, curl_off_t dltotal, curl_off_t dlnow, curl_off_t ultotal, curl_off_t ulnow);
 
+  static size_t header_callback(char *buffer, size_t size, size_t nitems, void *userdata)
+  {
+    std::string header(reinterpret_cast<char *>(buffer), size * nitems);
+    dict_t *headers = (dict_t *)userdata;
+    size_t seperator = header.find_first_of(":");
+
+    if (seperator != std::string::npos)
+    {
+      std::string key = header.substr(0, seperator);
+      key = Util::Trim(key, " ");
+      key = Util::ToLower(key);
+      std::string value = header.substr(seperator + 1);
+      value = Util::Trim(value, " ");
+      dbglogger_log("key=%s, value=%s", key.c_str(), value.c_str());
+      headers->erase(key);
+      headers->insert(std::make_pair(key, value));
+    }
+
+    return (size * nitems);
+  }
+
   dict_t
-  Client::options() const
+  Client::options()
   {
     return dict_t{
         {"webdav_hostname", this->webdav_hostname},
@@ -54,13 +75,19 @@ namespace WebDAV
     };
   }
 
+  long
+  Client::status_code()
+  {
+    return this->http_code;
+  }
+
   bool
   Client::sync_download(
       const std::string &remote_file,
       const std::string &local_file,
       callback_t callback,
       progress_data_t progress_data,
-      progress_t progress) const
+      progress_t progress)
   {
     bool is_existed = this->check(remote_file);
     if (!is_existed)
@@ -74,7 +101,7 @@ namespace WebDAV
     Request request(this->options());
 
     auto url = this->webdav_hostname + file_urn.quote(request.handle);
-
+    dbglogger_log("url=%s", url.c_str());
     request.set(CURLOPT_CUSTOMREQUEST, "GET");
     request.set(CURLOPT_URL, url.c_str());
     request.set(CURLOPT_HEADER, 0L);
@@ -91,6 +118,7 @@ namespace WebDAV
     }
 
     bool is_performed = request.perform();
+    this->http_code = request.status_code();
 
     if (callback != nullptr)
       callback(is_performed);
@@ -104,7 +132,7 @@ namespace WebDAV
       unsigned long long &buffer_size,
       callback_t callback,
       progress_data_t progress_data,
-      progress_t progress) const
+      progress_t progress)
   {
     bool is_existed = this->check(remote_file);
     if (!is_existed)
@@ -135,6 +163,8 @@ namespace WebDAV
     }
 
     bool is_performed = request.perform();
+    this->http_code = request.status_code();
+
     if (callback != nullptr)
       callback(is_performed);
     if (!is_performed)
@@ -155,7 +185,7 @@ bool
       uint64_t range_to,
       callback_t callback,
       progress_data_t progress_data,
-      progress_t progress) const
+      progress_t progress)
   {
     bool is_existed = this->check(remote_file);
     if (!is_existed)
@@ -190,6 +220,7 @@ bool
     }
 
     bool is_performed = request.perform();
+    this->http_code = request.status_code();
     if (callback != nullptr)
       callback(is_performed);
     if (!is_performed)
@@ -207,7 +238,7 @@ bool
       std::ostream &stream,
       callback_t callback,
       progress_data_t progress_data,
-      progress_t progress) const
+      progress_t progress)
   {
     bool is_existed = this->check(remote_file);
     if (!is_existed)
@@ -236,6 +267,7 @@ bool
     }
 
     bool is_performed = request.perform();
+    this->http_code = request.status_code();
     if (callback != nullptr)
       callback(is_performed);
 
@@ -248,7 +280,7 @@ bool
       const std::string &local_file,
       callback_t callback,
       progress_data_t progress_data,
-      progress_t progress) const
+      progress_t progress)
   {
     bool is_existed = FileInfo::exists(local_file);
     if (!is_existed)
@@ -285,7 +317,7 @@ bool
     }
 
     bool is_performed = request.perform();
-
+    this->http_code = request.status_code();
     if (callback != nullptr)
       callback(is_performed);
     return is_performed;
@@ -298,7 +330,7 @@ bool
       unsigned long long buffer_size,
       callback_t callback,
       progress_data_t progress_data,
-      progress_t progress) const
+      progress_t progress)
   {
     auto root_urn = Path(this->webdav_root, true);
     auto file_urn = root_urn + remote_file;
@@ -330,7 +362,7 @@ bool
     }
 
     bool is_performed = request.perform();
-
+    this->http_code = request.status_code();
     if (callback != nullptr)
       callback(is_performed);
 
@@ -344,7 +376,7 @@ bool
       std::istream &stream,
       callback_t callback,
       progress_data_t progress_data,
-      progress_t progress) const
+      progress_t progress)
   {
     auto root_urn = Path(this->webdav_root, true);
     auto file_urn = root_urn + remote_file;
@@ -377,6 +409,7 @@ bool
     }
 
     bool is_performed = request.perform();
+    this->http_code = request.status_code();
 
     if (callback != nullptr)
       callback(is_performed);
@@ -396,10 +429,16 @@ bool
 
     this->cert_path = get(options, "cert_path");
     this->key_path = get(options, "key_path");
+
+    auto check = get(options, "check_enabled");
+    if (check.length() > 0)
+      this->check_enabled = std::stoi(check);
+    else
+      this->check_enabled = 0;
   }
 
   unsigned long long
-  Client::free_size() const
+  Client::free_size()
   {
     Header header =
         {
@@ -434,6 +473,7 @@ bool
 #endif
 
     auto is_performed = request.perform();
+    this->http_code = request.status_code();
     if (!is_performed)
       return 0;
 
@@ -450,8 +490,10 @@ bool
   }
 
   bool
-  Client::check(const std::string &remote_resource) const
+  Client::check(const std::string &remote_resource)
   {
+    if (!this->check_enabled)
+      return true;
     auto root_urn = Path(this->webdav_root, true);
     auto resource_urn = root_urn + remote_resource;
 
@@ -475,11 +517,13 @@ bool
     request.set(CURLOPT_VERBOSE, 1);
 #endif
 
-    return request.perform();
+    bool is_performed = request.perform();
+    this->http_code = request.status_code();
+    return is_performed;
   }
 
   dict_t
-  Client::info(const std::string &remote_resource) const
+  Client::info(const std::string &remote_resource)
   {
     auto root_urn = Path(this->webdav_root, true);
     auto target_urn = root_urn + remote_resource;
@@ -504,6 +548,7 @@ bool
     request.set(CURLOPT_VERBOSE, 1);
 #endif
     bool is_performed = request.perform();
+    this->http_code = request.status_code();
 
     if (!is_performed)
       return dict_t{};
@@ -557,7 +602,36 @@ bool
   }
 
   bool
-  Client::is_directory(const std::string &remote_resource) const
+  Client::head(const std::string &remote_resource, dict_t *headers)
+  {
+    auto root_urn = Path(this->webdav_root, true);
+    auto target_urn = root_urn + remote_resource;
+
+    Header header =
+        {"Accept: */*"};
+
+    Request request(this->options());
+
+    auto url = this->webdav_hostname + target_urn.quote(request.handle);
+    dbglogger_log("url=%s", url.c_str());
+    request.set(CURLOPT_CUSTOMREQUEST, "HEAD");
+    request.set(CURLOPT_URL, url.c_str());
+    request.set(CURLOPT_HTTPHEADER, reinterpret_cast<curl_slist *>(header.handle));
+    request.set(CURLOPT_HEADERDATA, headers);
+    request.set(CURLOPT_HEADERFUNCTION, header_callback);
+    request.set(CURLOPT_NOBODY, 1L);
+#ifdef WDC_VERBOSE
+    request.set(CURLOPT_VERBOSE, 1);
+#endif
+    bool is_performed = request.perform();
+    dbglogger_log("finished head perform");
+    this->http_code = request.status_code();
+
+    return is_performed;
+  }
+
+  bool
+  Client::is_directory(const std::string &remote_resource)
   {
     auto information = this->info(remote_resource);
     auto resource_type = information["type"];
@@ -566,7 +640,7 @@ bool
   }
 
   dict_items_t
-  Client::list(const std::string &remote_directory) const
+  Client::list(const std::string &remote_directory)
   {
     bool is_existed = this->check(remote_directory);
     if (!is_existed)
@@ -597,6 +671,7 @@ bool
 #endif
 
     bool is_performed = request.perform();
+    this->http_code = request.status_code();
 
     if (!is_performed)
       return dict_items_t{};
@@ -651,7 +726,7 @@ bool
       const std::string &remote_file,
       const std::string &local_file,
       progress_data_t progress_data,
-      progress_t progress) const
+      progress_t progress)
   {
     return this->sync_download(remote_file, local_file, nullptr, progress_data, std::move(progress));
   }
@@ -662,7 +737,7 @@ bool
       const std::string &local_file,
       callback_t callback,
       progress_data_t progress_data,
-      progress_t progress) const
+      progress_t progress)
   {
     std::thread downloading([=]()
                             { this->sync_download(remote_file, local_file, callback, progress_data, std::move(progress)); });
@@ -675,7 +750,7 @@ bool
       char *&buffer_ptr,
       unsigned long long &buffer_size,
       progress_data_t progress_data,
-      progress_t progress) const
+      progress_t progress)
   {
     return this->sync_download_to(remote_file, buffer_ptr, buffer_size, nullptr, progress_data, std::move(progress));
   }
@@ -688,7 +763,7 @@ bool
       uint64_t range_from,
       uint64_t range_to,
       progress_data_t progress_data,
-      progress_t progress) const
+      progress_t progress)
   {
     return this->sync_download_range_to(remote_file, buffer_ptr, buffer_size, range_from, range_to, nullptr, progress_data, std::move(progress));
   }
@@ -698,13 +773,13 @@ bool
       const std::string &remote_file,
       std::ostream &stream,
       progress_data_t progress_data,
-      progress_t progress) const
+      progress_t progress)
   {
     return this->sync_download_to(remote_file, stream, nullptr, progress_data, std::move(progress));
   }
 
   bool
-  Client::create_directory(const std::string &remote_directory, bool recursive) const
+  Client::create_directory(const std::string &remote_directory, bool recursive)
   {
     bool is_existed = this->check(remote_directory);
     if (is_existed)
@@ -742,11 +817,13 @@ bool
     request.set(CURLOPT_VERBOSE, 1);
 #endif
 
-    return request.perform();
+    bool is_performed = request.perform();
+    this->http_code = request.status_code();
+    return is_performed;
   }
 
   bool
-  Client::move(const std::string &remote_source_resource, const std::string &remote_destination_resource) const
+  Client::move(const std::string &remote_source_resource, const std::string &remote_destination_resource)
   {
     bool is_existed = this->check(remote_source_resource);
     if (!is_existed)
@@ -773,11 +850,13 @@ bool
     request.set(CURLOPT_VERBOSE, 1);
 #endif
 
-    return request.perform();
+    bool is_performed = request.perform();
+    this->http_code = request.status_code();
+    return is_performed;
   }
 
   bool
-  Client::copy(const std::string &remote_source_resource, const std::string &remote_destination_resource) const
+  Client::copy(const std::string &remote_source_resource, const std::string &remote_destination_resource)
   {
     bool is_existed = this->check(remote_source_resource);
     if (!is_existed)
@@ -804,7 +883,9 @@ bool
     request.set(CURLOPT_VERBOSE, 1);
 #endif
 
-    return request.perform();
+    bool is_performed = request.perform();
+    this->http_code = request.status_code();
+    return is_performed;
   }
 
   bool
@@ -812,7 +893,7 @@ bool
       const std::string &remote_file,
       const std::string &local_file,
       progress_data_t progress_data,
-      progress_t progress) const
+      progress_t progress)
   {
     return this->sync_upload(remote_file, local_file, nullptr, progress_data, std::move(progress));
   }
@@ -823,7 +904,7 @@ bool
       const std::string &local_file,
       callback_t callback,
       progress_data_t progress_data,
-      progress_t progress) const
+      progress_t progress)
   {
     std::thread uploading([=]()
                           { this->sync_upload(remote_file, local_file, callback, progress_data, std::move(progress)); });
@@ -835,7 +916,7 @@ bool
       const std::string &remote_file,
       std::istream &stream,
       progress_data_t progress_data,
-      progress_t progress) const
+      progress_t progress)
   {
     return this->sync_upload_from(remote_file, stream, nullptr, progress_data, std::move(progress));
   }
@@ -846,13 +927,13 @@ bool
       char *buffer_ptr,
       unsigned long long buffer_size,
       progress_data_t progress_data,
-      progress_t progress) const
+      progress_t progress)
   {
     return this->sync_upload_from(remote_file, buffer_ptr, buffer_size, nullptr, progress_data, std::move(progress));
   }
 
   bool
-  Client::clean(const std::string &remote_resource) const
+  Client::clean(const std::string &remote_resource)
   {
     bool is_existed = this->check(remote_resource);
     if (!is_existed)
@@ -877,7 +958,9 @@ bool
     request.set(CURLOPT_VERBOSE, 1);
 #endif
 
-    return request.perform();
+    bool is_performed = request.perform();
+    this->http_code = request.status_code();
+    return is_performed;
   }
 
   class Environment

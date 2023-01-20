@@ -1253,6 +1253,8 @@ namespace Windows
             selected_action = ACTION_NONE;
             break;
         case ACTION_INSTALL_URL_PKG:
+            activity_inprogess = true;
+            stop_activity = false;
             Actions::InstallUrlPkg();
             selected_action = ACTION_NONE;
             break;

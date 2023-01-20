@@ -100,6 +100,5 @@ namespace INSTALLER
     void Exit(void);
 
     int InstallRemotePkg(const char *filename, pkg_header *header);
-    int InstallUrlPkg(const char *filename, pkg_header *header);
-    int InstallLocalPkg(const char *filename, pkg_header *header);
+    int InstallLocalPkg(const char *filename, pkg_header *header, bool remove_after_install=false);
 }

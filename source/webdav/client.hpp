@@ -82,41 +82,48 @@ namespace WebDAV
     /// \return size in bytes
     /// \include client/size.cpp
     ///
-    auto free_size() const -> unsigned long long;
+    auto free_size() -> unsigned long long;
 
     ///
     /// Check for existence of a remote resource
     /// \param[in] remote_resource
     /// \include client/check.cpp
     ///
-    auto check(const std::string& remote_resource = "/") const -> bool;
+    auto check(const std::string& remote_resource = "/") -> bool;
 
     ///
     /// Get information of a remote resource
     /// \param[in] remote_resource
     /// \include client/info.cpp
     ///
-    auto info(const std::string& remote_resource) const -> dict_t;
+    auto info(const std::string& remote_resource) -> dict_t;
+
+    ///
+    /// Get information of a remote resource
+    /// \param[in] remote_resource
+    /// \include client/info.cpp
+    ///
+    auto head(const std::string& remote_resource, dict_t *headers) -> bool;
 
     ///
     /// Clean an remote resource
     /// \param[in] remote_resource
     /// \include client/clean.cpp
     ///
-    auto clean(const std::string& remote_resource) const -> bool;
+    auto clean(const std::string& remote_resource) -> bool;
 
     ///
     /// Checks whether the resource directory
     /// \param[in] remote_resource
     ///
-    auto is_directory(const std::string& remote_resource) const -> bool;
+    auto is_directory(const std::string& remote_resource) -> bool;
 
     ///
     /// List a remote directory
     /// \param[in] remote_directory
     /// \include client/list.cpp
     ///
-    auto list(const std::string& remote_directory = "") const -> dict_items_t;
+    auto list(const std::string& remote_directory = "") -> dict_items_t;
 
     ///
     /// Create a remote directory
@@ -127,7 +134,7 @@ namespace WebDAV
     auto create_directory(
       const std::string& remote_directory,
       bool recursive = false
-    ) const -> bool;
+    ) -> bool;
 
     ///
     /// Move a remote resource
@@ -138,7 +145,7 @@ namespace WebDAV
     auto move(
       const std::string& remote_source_resource,
       const std::string& remote_destination_resource
-    ) const -> bool;
+    ) -> bool;
 
     ///
     /// Copy a remote resource
@@ -149,7 +156,7 @@ namespace WebDAV
     auto copy(
       const std::string& remote_source_resource,
       const std::string& remote_destination_resource
-    ) const -> bool;
+    ) -> bool;
 
     ///
     /// Download a remote file to a local file
@@ -163,7 +170,7 @@ namespace WebDAV
       const std::string& local_file,
       progress_data_t progress_data = nullptr,
       progress_t progress = nullptr
-    ) const -> bool;
+    ) -> bool;
 
     ///
     /// Download a remote file to a buffer
@@ -179,7 +186,7 @@ namespace WebDAV
       unsigned long long& buffer_size,
       progress_data_t progress_data = nullptr,
       progress_t progress = nullptr
-    ) const -> bool;
+    ) -> bool;
 
     ///
     /// Download a remote file to a buffer for specified range
@@ -199,7 +206,7 @@ namespace WebDAV
       uint64_t range_to,
       progress_data_t progress_data = nullptr,
       progress_t progress = nullptr
-    ) const -> bool;
+    ) -> bool;
 
     ///
     /// Download a remote file to a stream
@@ -213,7 +220,7 @@ namespace WebDAV
       std::ostream& stream,
       progress_data_t progress_data = nullptr,
       progress_t progress = nullptr
-    ) const -> bool;
+    ) -> bool;
 
     ///
     /// Asynchronously download a remote file to a local file
@@ -229,7 +236,7 @@ namespace WebDAV
       callback_t callback = nullptr,
       progress_data_t progress_data = nullptr,
       progress_t progress = nullptr
-    ) const -> void;
+    ) -> void;
 
     ///
     /// Upload a remote file from a local file
@@ -243,7 +250,7 @@ namespace WebDAV
       const std::string& local_file,
       progress_data_t progress_data = nullptr,
       progress_t progress = nullptr
-    ) const -> bool;
+    ) -> bool;
 
     ///
     /// Upload a remote file from a buffer
@@ -259,7 +266,7 @@ namespace WebDAV
       unsigned long long buffer_size,
       progress_data_t progress_data = nullptr,
       progress_t progress = nullptr
-    ) const -> bool;
+    ) -> bool;
 
     ///
     /// Upload a remote file from a stream
@@ -273,7 +280,7 @@ namespace WebDAV
       std::istream& stream,
       progress_data_t progress_data = nullptr,
       progress_t progress = nullptr
-    ) const -> bool;
+    ) -> bool;
 
     ///
     /// Asynchronously upload a remote file from a local file
@@ -289,7 +296,9 @@ namespace WebDAV
       callback_t callback = nullptr,
       progress_data_t progress_data = nullptr,
       progress_t progress = nullptr
-    ) const -> void;
+    ) -> void;
+
+    long status_code();
 
   private:
 
@@ -299,7 +308,7 @@ namespace WebDAV
       callback_t callback = nullptr,
       progress_data_t progress_data = nullptr,
       progress_t progress = nullptr
-    ) const -> bool;
+    ) -> bool;
 
     auto sync_download_to(
       const std::string& remote_file,
@@ -308,7 +317,7 @@ namespace WebDAV
       callback_t callback = nullptr,
       progress_data_t progress_data = nullptr,
       progress_t progress = nullptr
-    ) const -> bool;
+    ) -> bool;
 
     auto sync_download_range_to(
       const std::string& remote_file,
@@ -319,7 +328,7 @@ namespace WebDAV
       callback_t callback = nullptr,
       progress_data_t progress_data = nullptr,
       progress_t progress = nullptr
-    ) const -> bool;
+    ) -> bool;
 
     bool sync_download_to(
       const std::string& remote_file,
@@ -327,7 +336,7 @@ namespace WebDAV
       callback_t callback = nullptr,
       progress_data_t progress_data = nullptr,
       progress_t progress = nullptr
-    ) const ;
+    );
 
     bool sync_upload(
       const std::string& remote_file,
@@ -335,7 +344,7 @@ namespace WebDAV
       callback_t callback = nullptr,
       progress_data_t progress_data = nullptr,
       progress_t progress = nullptr
-    ) const ;
+    );
 
     auto sync_upload_from(
       const std::string& remote_file,
@@ -344,7 +353,7 @@ namespace WebDAV
       callback_t callback = nullptr,
       progress_data_t progress_data = nullptr,
       progress_t progress = nullptr
-    ) const -> bool;
+    ) -> bool;
 
     auto sync_upload_from(
       const std::string& remote_file,
@@ -352,7 +361,7 @@ namespace WebDAV
       callback_t callback = nullptr,
       progress_data_t progress_data = nullptr,
       progress_t progress = nullptr
-    ) const -> bool;
+    ) -> bool;
 
     enum { buffer_size = 1000 * 1000 };
 
@@ -368,7 +377,10 @@ namespace WebDAV
     std::string cert_path;
     std::string key_path;
 
-    dict_t options() const ;
+    dict_t options();
+
+    long http_code;
+    int check_enabled = 0;
   };
 } // namespace WebDAV
 

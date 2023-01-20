@@ -13,6 +13,7 @@
 #include "windows.h"
 #include "util.h"
 #include "rtc.h"
+#include "dbglogger.h"
 
 #define MIN(X, Y) (((X) < (Y)) ? (X) : (Y))
 
@@ -20,22 +21,21 @@ static const char *months[12] = {"Jan", "Feb", "Mar", "Apr", "May", "Jun", "Jul"
 
 namespace WebDAV
 {
-
 	static int DownloadCallback(void *context, curl_off_t dltotal, curl_off_t dlnow, curl_off_t ultotal, curl_off_t ulnow)
 	{
 		int64_t *bytes_transfered = (int64_t *)context;
 		*bytes_transfered = reinterpret_cast<int64_t>(dlnow);
-		return 0;
+		return CURLE_OK;
 	}
 
 	static int UploadCallback(void *context, curl_off_t dltotal, curl_off_t dlnow, curl_off_t ultotal, curl_off_t ulnow)
 	{
 		int64_t *bytes_transfered = (int64_t *)context;
 		*bytes_transfered = reinterpret_cast<int64_t>(ulnow);
-		return 0;
+		return CURLE_OK;
 	}
 
-	int WebDavClient::Connect(const char *host, const char *user, const char *pass)
+	int WebDavClient::Connect(const char *host, const char *user, const char *pass, bool check_enabled)
 	{
 		std::string url = std::string(host);
 		std::size_t scheme_pos = url.find_first_of("://");
@@ -53,7 +53,8 @@ namespace WebDAV
 			{"webdav_hostname", url},
 			{"webdav_root", root_folder},
 			{"webdav_username", user},
-			{"webdav_password", pass}};
+			{"webdav_password", pass},
+			{"check_enabled", check_enabled ? "1" : "0"}};
 		client = new WebDAV::Client(options);
 		connected = true;
 
@@ -82,6 +83,7 @@ namespace WebDAV
 	bool WebDavClient::Ping()
 	{
 		connected = client->check();
+		sprintf(response, "Http Code %ld", client->status_code());
 		return connected;
 	}
 
@@ -106,7 +108,9 @@ namespace WebDAV
 	 */
 	int WebDavClient::Mkdir(const char *ppath)
 	{
-		return client->create_directory(ppath);
+		bool ret = client->create_directory(ppath);
+		sprintf(response, "Http Code %ld", client->status_code());
+		return ret;
 	}
 
 	/*
@@ -116,7 +120,9 @@ namespace WebDAV
 	 */
 	int WebDavClient::_Rmdir(const char *ppath)
 	{
-		return client->clean(ppath);
+		bool ret = client->clean(ppath);
+		sprintf(response, "Http Code %ld", client->status_code());
+		return ret;
 	}
 
 	/*
@@ -176,14 +182,18 @@ namespace WebDAV
 
 	int WebDavClient::Get(const char *outputfile, const char *ppath)
 	{
-		return client->download(ppath, outputfile, &bytes_transfered, DownloadCallback);
+		bool ret = client->download(ppath, outputfile, &bytes_transfered, DownloadCallback);
+		sprintf(response, "Http Code %ld", client->status_code());
+		return ret;
 	}
 
 	bool WebDavClient::FileExists(const char *ppath)
 	{
 		std::string path = ppath;
 		path = Util::Ltrim(path, "/");
-		return client->check(path);
+		bool ret = client->check(path);
+		sprintf(response, "Http Code %ld", client->status_code());
+		return ret;
 	}
 
 	/*
@@ -193,17 +203,23 @@ namespace WebDAV
 	 */
 	int WebDavClient::Put(const char *inputfile, const char *ppath)
 	{
-		return client->upload(ppath, inputfile, &bytes_transfered, UploadCallback);
+		bool ret = client->upload(ppath, inputfile, &bytes_transfered, UploadCallback);
+		sprintf(response, "Http Code %ld", client->status_code());
+		return ret;
 	}
 
 	int WebDavClient::Rename(const char *src, const char *dst)
 	{
-		return client->move(src, dst);
+		bool ret = client->move(src, dst);
+		sprintf(response, "Http Code %ld", client->status_code());
+		return ret;
 	}
 
 	int WebDavClient::Delete(const char *ppath)
 	{
-		return client->clean(ppath);
+		bool ret = client->clean(ppath);
+		sprintf(response, "Http Code %ld", client->status_code());
+		return ret;
 	}
 
 	int WebDavClient::Size(const char *ppath, int64_t *size)
@@ -291,11 +307,11 @@ namespace WebDAV
 				OrbisDateTime lt;
 				char month[5];
 				sscanf(p_char, "%hd %s %hd %hd:%hd:%hd", &gmt.day, month, &gmt.year, &gmt.hour, &gmt.minute, &gmt.second);
-				for (int k=0; k <12; k++)
+				for (int k = 0; k < 12; k++)
 				{
 					if (strcmp(month, months[k]) == 0)
 					{
-						gmt.month = k+1;
+						gmt.month = k + 1;
 						break;
 					}
 				}
@@ -323,17 +339,24 @@ namespace WebDAV
 		return path1;
 	}
 
-	int WebDavClient::Head(const char *path, void *buffer, uint16_t len)
+	int WebDavClient::Head(const char *path, void *buffer, int64_t len)
 	{
 		char *buffer_ptr = nullptr;
 		unsigned long long buffer_size = 0;
 
 		bool ret = client->download_range_to(path, buffer_ptr, buffer_size, 0, len - 1);
-		if (!ret || buffer_size != len)
+		sprintf(response, "Http Code %ld", client->status_code());
+		dbglogger_log("buffer_size=%d, len=%d", buffer_size, len);
+		if (buffer_size != len)
 		{
 			return 0;
 		}
 		memcpy(buffer, buffer_ptr, len);
 		return 1;
+	}
+
+	bool WebDavClient::GetHeaders(const char *path, dict_t *headers)
+	{
+		return client->head(path, headers);
 	}
 }

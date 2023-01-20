@@ -39,29 +39,33 @@ namespace WebDAV
   class Request
   {
   public:
-    explicit Request(dict_t&& options_);
-    Request(const Request& other) = delete;
-    Request(Request&& other) noexcept;
+    explicit Request(dict_t &&options_);
+    Request(const Request &other) = delete;
+    Request(Request &&other) noexcept;
     ~Request() noexcept;
 
-    auto operator=(const Request& other) -> Request& = delete;
-    auto operator=(Request&& other) noexcept -> Request &;
+    auto operator=(const Request &other) -> Request & = delete;
+    auto operator=(Request &&other) noexcept -> Request &;
 
     template <typename T>
     auto set(CURLoption option, T value) const noexcept -> bool
     {
-      if (this->handle == nullptr) return false;
+      if (this->handle == nullptr)
+        return false;
       return check_code(curl_easy_setopt(this->handle, option, value));
     }
 
-    bool perform() const noexcept;
-    void* handle;
+    bool perform() noexcept;
+    long status_code() const noexcept;
+    void *handle;
 
   private:
     const dict_t options;
+    dict_t response_header = {};
+    long http_code;
     bool proxy_enabled() const noexcept;
     bool cert_required() const noexcept;
-    auto swap(Request& other) noexcept -> void;
+    auto swap(Request &other) noexcept -> void;
   };
 } // namespace WebDAV
 

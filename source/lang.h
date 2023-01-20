@@ -84,7 +84,10 @@
 	FUNC(STR_FAVORITE_URLS)              \
 	FUNC(STR_SLOT)                       \
 	FUNC(STR_EDIT)                       \
-	FUNC(STR_ONETIME_URL)
+	FUNC(STR_ONETIME_URL)                \
+	FUNC(STR_NOT_A_VALID_PACKAGE)        \
+	FUNC(STR_WAIT_FOR_INSTALL_MSG)       \
+	FUNC(STR_FAIL_DELETE_TMP_PKG_MSG)
 
 #define GET_VALUE(x) x,
 #define GET_STRING(x) #x,
@@ -94,7 +97,7 @@ enum
 	FOREACH_STR(GET_VALUE)
 };
 
-#define LANG_STRINGS_NUM 81
+#define LANG_STRINGS_NUM 84
 #define LANG_ID_SIZE LANG_STRINGS_NUM
 #define LANG_STR_SIZE 256
 extern char lang_identifiers[LANG_STRINGS_NUM][LANG_ID_SIZE];

@@ -78,6 +78,7 @@ namespace Actions
     void InstallRemotePkgs();
     void *InstallLocalPkgsThread(void *argp);
     void InstallLocalPkgs();
+    void *InstallUrlPkgThread(void *argp);
     void InstallUrlPkg();
 }
 

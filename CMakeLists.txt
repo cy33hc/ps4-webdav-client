@@ -43,9 +43,10 @@ add_executable(ps4_webdav_client
 
 add_self(ps4_webdav_client)
 
-add_pkg(ps4_webdav_client ${CMAKE_SOURCE_DIR}/data "WDVC00001" "PS4 WebDAV Client" "01.00" 32 0)
+add_pkg(ps4_webdav_client ${CMAKE_SOURCE_DIR}/data "WDVC00001" "PS4 WebDAV Client" "01.01" 32 0)
 
 target_link_libraries(ps4_webdav_client
+  dbglogger
   c
   c++
   png

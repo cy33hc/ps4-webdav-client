@@ -22,17 +22,18 @@
 
 #include "request.hpp"
 #include "fsinfo.hpp"
+#include "util.h"
 
 namespace WebDAV
 {
   static int sockopt_callback(void *clientp, curl_socket_t curlfd, curlsocktype purpose)
   {
     int const size = 1048576;
-    if (setsockopt(curlfd, SOL_SOCKET, SO_RCVBUF, &size, sizeof (size)) == -1)
+    if (setsockopt(curlfd, SOL_SOCKET, SO_RCVBUF, &size, sizeof(size)) == -1)
     {
       return CURL_SOCKOPT_ERROR;
     }
-    if (setsockopt(curlfd, SOL_SOCKET, SO_SNDBUF, &size, sizeof (size)) == -1)
+    if (setsockopt(curlfd, SOL_SOCKET, SO_SNDBUF, &size, sizeof(size)) == -1)
     {
       return CURL_SOCKOPT_ERROR;
     }
@@ -115,7 +116,6 @@ namespace WebDAV
         this->set(CURLOPT_PROXYUSERPWD, const_cast<char *>(token.c_str()));
       }
     }
-
   }
 
   Request::~Request() noexcept
@@ -145,16 +145,16 @@ namespace WebDAV
     return *this;
   }
 
-  bool Request::perform() const noexcept
+  bool Request::perform() noexcept
   {
     if (this->handle == nullptr)
       return false;
     auto is_performed = check_code(curl_easy_perform(this->handle));
     if (!is_performed)
       return false;
-    long http_code = 0;
-    curl_easy_getinfo(this->handle, CURLINFO_RESPONSE_CODE, &http_code);
-    if (http_code < 200 || http_code > 299)
+    this->http_code = 0;
+    curl_easy_getinfo(this->handle, CURLINFO_RESPONSE_CODE, &this->http_code);
+    if (this->http_code < 200 || this->http_code > 299)
       return false;
     return true;
   }
@@ -187,4 +187,10 @@ namespace WebDAV
       return false;
     return FileInfo::exists(key_path);
   }
+
+  long Request::status_code() const noexcept
+  {
+    return this->http_code;
+  }
+
 } // namespace WebDAV
