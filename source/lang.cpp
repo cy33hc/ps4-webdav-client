@@ -93,7 +93,7 @@ char lang_strings[LANG_STRINGS_NUM][LANG_STR_SIZE] = {
 	"One Time Url",													  // STR_ONETIME_URL
 	"Not a valid Package",											  // STR_NOT_A_VALID_PACKAGE
 	"Waiting for Package to finish installing",						  // STR_WAIT_FOR_INSTALL_MSG
-	"Failed to delete temporary pkg file. Please delete it manually"  // STR_FAIL_DELETE_TMP_PKG_MSG
+	"Failed to install pkg file"									  // STR_FAIL_INSTALL_TMP_PKG_MSG
 };
 
 bool needs_extended_font = false;

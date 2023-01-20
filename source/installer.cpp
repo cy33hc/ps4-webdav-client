@@ -194,7 +194,7 @@ namespace INSTALLER
 			download_params.params.contentName = titleId;
 			download_params.params.iconPath = "";
 			download_params.params.playgoScenarioId = "0";
-			download_params.params.option = ORBIS_BGFT_TASK_OPT_DISABLE_CDN_QUERY_PARAM;
+			download_params.params.option = ORBIS_BGFT_TASK_OPT_FORCE_UPDATE;
 			download_params.slot = 0;
 		}
 
@@ -226,7 +226,7 @@ namespace INSTALLER
 		{
 			memset(&progress_info, 0, sizeof(progress_info));
 			ret = sceBgftServiceDownloadGetProgress(task_id, &progress_info);
-			if (ret)
+			if (ret || (progress_info.transferred > 0 && progress_info.errorResult != 0))
 				return -3;
 			prog = (uint32_t)(((float)progress_info.transferred / progress_info.length) * 100.f);
 			bytes_to_download = progress_info.length;
