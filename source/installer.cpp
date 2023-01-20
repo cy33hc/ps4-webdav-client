@@ -221,8 +221,10 @@ namespace INSTALLER
 			Util::Notify("%s queued", titleId);
 			return 1;
 		}
-		
+
 		sprintf(activity_message, "%s", lang_strings[STR_WAIT_FOR_INSTALL_MSG]);
+		bytes_to_download = 1;
+		bytes_transfered = 0;
 		while (prog < 99)
 		{
 			memset(&progress_info, 0, sizeof(progress_info));
@@ -230,6 +232,8 @@ namespace INSTALLER
 			if (ret)
 				return -3;
 			prog = (uint32_t)(((float)progress_info.transferred / progress_info.length) * 100.f);
+			bytes_to_download = progress_info.length;
+			bytes_transfered = progress_info.transferred;
 		}
 		FS::Rm(filename);
 		return 1;
