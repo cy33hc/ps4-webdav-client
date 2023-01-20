@@ -767,6 +767,7 @@ namespace Actions
             bytes_to_download = std::stol(content_length);
         else
             bytes_to_download = 1;
+        file_transfering = 1;
         int is_performed = tmp_client->Get(filename, path.c_str());
 
         if (is_performed == 0)
