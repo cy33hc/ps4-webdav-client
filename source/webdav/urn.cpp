@@ -40,6 +40,8 @@ namespace WebDAV
 
     const string Path::separate = "/";
     const string Path::root = "/";
+    const string Path::param_separate = "&";
+    const string Path::query_separate = "?";
 
     Path::Path(const string& path_, bool force_dir)
     {
@@ -106,7 +108,19 @@ namespace WebDAV
     {
       if (this->is_root()) return m_path;
 
-      auto names = split(m_path, Path::separate);
+      size_t query_pos = m_path.find_first_of(Path::query_separate);
+      string query;
+      string path;
+      if (query_pos != string::npos)
+      {
+        query = m_path.substr(query_pos+1);
+        path = m_path.substr(0, query_pos);
+      }
+      else
+      {
+        path = m_path;
+      }
+      auto names = split(path, Path::separate);
       string quote_path;
 
       std::for_each(names.begin(), names.end(), [&quote_path, request](string & name)
@@ -119,6 +133,32 @@ namespace WebDAV
       if (is_directory())
       {
         quote_path.append(Path::separate);
+      }
+
+      if (query.length()>0)
+      {
+        auto params = split(query, Path::param_separate);
+        if (params.size() > 0)
+          quote_path.append(Path::query_separate);
+        std::for_each(params.begin(), params.end(), [&quote_path, request](string & param)
+        {
+          auto param_pair = split(param, "=");
+          if (param_pair.size() == 0)
+          {
+            quote_path.append(Path::param_separate);
+          }
+          else
+          {          
+            quote_path.append(escape(request, param_pair[0]));
+            quote_path.append("=");
+            if (param_pair.size() > 1)
+            {
+              quote_path.append(escape(request, param_pair[1]));
+            }
+            quote_path.append(Path::param_separate);
+          }
+        });
+        quote_path.pop_back();
       }
       return quote_path;
     }

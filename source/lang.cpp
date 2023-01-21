@@ -93,7 +93,8 @@ char lang_strings[LANG_STRINGS_NUM][LANG_STR_SIZE] = {
 	"One Time Url",													  // STR_ONETIME_URL
 	"Not a valid Package",											  // STR_NOT_A_VALID_PACKAGE
 	"Waiting for Package to finish installing",						  // STR_WAIT_FOR_INSTALL_MSG
-	"Failed to install pkg file. Please delete the tmp pkg manually"  // STR_FAIL_INSTALL_TMP_PKG_MSG
+	"Failed to install pkg file. Please delete the tmp pkg manually", // STR_FAIL_INSTALL_TMP_PKG_MSG
+	"Failed to obtain google download URL"							  // STR_FAIL_TO_OBTAIN_GG_DL_MSG
 };
 
 bool needs_extended_font = false;

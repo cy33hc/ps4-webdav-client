@@ -57,6 +57,8 @@ namespace WebDAV
 
       static const string separate;
       static const string root;
+      static const string param_separate;
+      static const string query_separate;
     };
   }
 }

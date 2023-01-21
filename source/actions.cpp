@@ -1,6 +1,8 @@
 #include <string.h>
 #include <stdlib.h>
 #include <pthread.h>
+#include <lexbor/html/parser.h>
+#include <lexbor/dom/interfaces/element.h>
 #include "fs.h"
 #include "config.h"
 #include "windows.h"
@@ -12,7 +14,6 @@
 #include "urn.hpp"
 #include "rtc.h"
 #include "webdavclient.h"
-#include "dbglogger.h"
 
 namespace Actions
 {
@@ -723,65 +724,149 @@ namespace Actions
         }
     }
 
+    std::string GetGoogleDownloadUrl(std::string &url)
+    {
+        size_t scheme_pos = url.find_first_of("://");
+        size_t path_pos = url.find_first_of("/", scheme_pos + 3);
+        std::string host = url.substr(0, path_pos);
+        std::string path = url.substr(path_pos);
+
+        std::string first_download_path;
+        size_t file_id_start_pos = path.find("/file/d/");
+        if (file_id_start_pos != std::string::npos)
+        {
+            file_id_start_pos = file_id_start_pos + 8;
+            std::string file_id = path.substr(file_id_start_pos);
+            size_t file_id_end_pos = file_id.find_first_of("/");
+            file_id = file_id.substr(0, file_id_end_pos);
+            first_download_path = "/uc?export=download&id=" + file_id;
+        }
+        else if (path.find("/uc?export=download") != std::string::npos)
+        {
+            first_download_path = path;
+        }
+        else
+        {
+            return "";
+        }
+
+        WebDAV::WebDavClient tmp_client;
+        tmp_client.Connect(host.c_str(), "", "", false);
+        WebDAV::dict_t headers;
+        tmp_client.GetHeaders(first_download_path.c_str(), &headers);
+
+        std::string content_type = WebDAV::get(headers, "content-type");
+        if (content_type.find("application/octet-stream") != std::string::npos)
+        {
+            return first_download_path;
+        }
+        else if (content_type.find("text/html") == std::string::npos)
+        {
+            return "";
+        }
+        char *buffer_ptr = nullptr;
+        unsigned long long buffer_size = 0;
+        tmp_client.GetClient()->download_to(first_download_path, buffer_ptr, buffer_size);
+
+        lxb_status_t status;
+        lxb_dom_element_t *element;
+        lxb_html_document_t *document;
+        lxb_dom_collection_t *collection;
+        lxb_dom_attr_t *attr;
+        document = lxb_html_document_create();
+        status = lxb_html_document_parse(document, (lxb_char_t *)buffer_ptr, buffer_size);
+        if (status != LXB_STATUS_OK)
+            return "";
+        collection = lxb_dom_collection_make(&document->dom_document, 128);
+        if (collection == NULL)
+        {
+            return "";
+        }
+        status = lxb_dom_elements_by_tag_name(lxb_dom_interface_element(document->body),
+                                              collection, (const lxb_char_t *)"form", 4);
+        if (status != LXB_STATUS_OK)
+            return "";
+        std::string download_url;
+        for (size_t i = 0; i < lxb_dom_collection_length(collection); i++)
+        {
+            element = lxb_dom_collection_element(collection, i);
+            std::string form_id((char *)element->attr_id->value->data, element->attr_id->value->length);
+            if (form_id == "download-form")
+            {
+                size_t value_len;
+                const lxb_char_t *value = lxb_dom_element_get_attribute(element, (const lxb_char_t *)"action", 6, &value_len);
+                download_url = std::string((char *)value, value_len);
+                break;
+            }
+        }
+        lxb_dom_collection_destroy(collection, true);
+        lxb_html_document_destroy(document);
+
+        return download_url;
+    }
+
     void *InstallUrlPkgThread(void *argp)
     {
         bytes_transfered = 0;
         sprintf(status_message, "%s", "");
         pkg_header header;
-		char filename[2000];
-		OrbisDateTime now;
-		OrbisTick tick;
-		sceRtcGetCurrentClockLocalTime(&now);
-		sceRtcGetTick(&now, &tick);
-		sprintf(filename, "%s/%lu.pkg", DATA_PATH, tick.mytick);
+        char filename[2000];
+        OrbisDateTime now;
+        OrbisTick tick;
+        sceRtcGetCurrentClockLocalTime(&now);
+        sceRtcGetTick(&now, &tick);
+        sprintf(filename, "%s/%lu.pkg", DATA_PATH, tick.mytick);
 
         std::string full_url = std::string(install_pkg_url);
+        if (full_url.find("https://drive.google.com") != std::string::npos)
+            full_url = GetGoogleDownloadUrl(full_url);
+
+        if (full_url.empty())
+        {
+            sprintf(status_message, "%s", lang_strings[STR_FAIL_TO_OBTAIN_GG_DL_MSG]);
+            activity_inprogess = false;
+            Windows::SetModalMode(false);
+            return NULL;
+        }
         size_t scheme_pos = full_url.find_first_of("://");
-        size_t path_pos = full_url.find_first_of("/", scheme_pos+3);
+        size_t path_pos = full_url.find_first_of("/", scheme_pos + 3);
         std::string host = full_url.substr(0, path_pos);
         std::string path = full_url.substr(path_pos);
-        dbglogger_log("host=%s, path=%s", host.c_str(), path.c_str());
 
-        WebDAV::WebDavClient *tmp_client = new WebDAV::WebDavClient();
-        tmp_client->Connect(host.c_str(), "", "0", false);
+        WebDAV::WebDavClient tmp_client;
+        tmp_client.Connect(host.c_str(), "", "0", false);
 
         sprintf(activity_message, "%s URL to %s", lang_strings[STR_DOWNLOADING], filename);
         int s = sizeof(pkg_header);
         memset(&header, 0, s);
         WebDAV::dict_t response_headers{};
-        int ret = tmp_client->GetHeaders(path.c_str(), &response_headers);
+        int ret = tmp_client.GetHeaders(path.c_str(), &response_headers);
         if (!ret)
         {
-            dbglogger_log("error");
             sprintf(status_message, "%s - %s", lang_strings[STR_FAILED], lang_strings[STR_CANNOT_READ_PKG_HDR_MSG]);
-            tmp_client->Quit();
-            delete tmp_client;
+            tmp_client.Quit();
             activity_inprogess = false;
             Windows::SetModalMode(false);
             return NULL;
         }
 
         auto content_length = WebDAV::get(response_headers, "content-length");
-        dbglogger_log("content_length=%s", content_length.c_str());
         if (content_length.length() > 0)
             bytes_to_download = std::stol(content_length);
         else
             bytes_to_download = 1;
         file_transfering = 1;
-        int is_performed = tmp_client->Get(filename, path.c_str());
+        int is_performed = tmp_client.Get(filename, path.c_str());
 
         if (is_performed == 0)
         {
-            dbglogger_log("error after Get");
-            sprintf(status_message, "%s - %s", lang_strings[STR_FAILED], tmp_client->LastResponse());
-            tmp_client->Quit();
-            delete tmp_client;
+            sprintf(status_message, "%s - %s", lang_strings[STR_FAILED], tmp_client.LastResponse());
+            tmp_client.Quit();
             activity_inprogess = false;
             Windows::SetModalMode(false);
             return NULL;
         }
-        tmp_client->Quit();
-        delete tmp_client;
+        tmp_client.Quit();
 
         FILE *in = FS::OpenRead(filename);
         if (in == NULL)
@@ -792,7 +877,7 @@ namespace Actions
             return NULL;
         }
 
-        FS::Read(in, (void*)&header, s);
+        FS::Read(in, (void *)&header, s);
         FS::Close(in);
         if (BE32(header.pkg_magic) == PKG_MAGIC)
         {

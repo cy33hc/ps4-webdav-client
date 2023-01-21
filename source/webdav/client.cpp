@@ -31,7 +31,7 @@
 #include "util.h"
 #include <algorithm>
 #include <thread>
-#include "dbglogger.h"
+
 namespace WebDAV
 {
   using Urn::Path;
@@ -51,7 +51,6 @@ namespace WebDAV
       key = Util::ToLower(key);
       std::string value = header.substr(seperator + 1);
       value = Util::Trim(value, " ");
-      dbglogger_log("key=%s, value=%s", key.c_str(), value.c_str());
       headers->erase(key);
       headers->insert(std::make_pair(key, value));
     }
@@ -101,7 +100,6 @@ namespace WebDAV
     Request request(this->options());
 
     auto url = this->webdav_hostname + file_urn.quote(request.handle);
-    dbglogger_log("url=%s", url.c_str());
     request.set(CURLOPT_CUSTOMREQUEST, "GET");
     request.set(CURLOPT_URL, url.c_str());
     request.set(CURLOPT_HEADER, 0L);
@@ -146,7 +144,6 @@ namespace WebDAV
     Request request(this->options());
 
     auto url = this->webdav_hostname + file_urn.quote(request.handle);
-
     request.set(CURLOPT_CUSTOMREQUEST, "GET");
     request.set(CURLOPT_URL, url.c_str());
     request.set(CURLOPT_HEADER, 0L);
@@ -613,7 +610,6 @@ bool
     Request request(this->options());
 
     auto url = this->webdav_hostname + target_urn.quote(request.handle);
-    dbglogger_log("url=%s", url.c_str());
     request.set(CURLOPT_CUSTOMREQUEST, "HEAD");
     request.set(CURLOPT_URL, url.c_str());
     request.set(CURLOPT_HTTPHEADER, reinterpret_cast<curl_slist *>(header.handle));
@@ -624,7 +620,6 @@ bool
     request.set(CURLOPT_VERBOSE, 1);
 #endif
     bool is_performed = request.perform();
-    dbglogger_log("finished head perform");
     this->http_code = request.status_code();
 
     return is_performed;

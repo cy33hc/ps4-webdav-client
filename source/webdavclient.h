@@ -12,7 +12,7 @@ namespace WebDAV
 	class WebDavClient
 	{
 	public:
-		int Connect(const char *host, const char *user, const char *pass, bool check_enabled=false);
+		int Connect(const char *host, const char *user, const char *pass, bool check_enabled=true);
 		int Mkdir(const char *path);
 		int Rmdir(const char *path, bool recursive);
 		int Size(const char *path, int64_t *size);
@@ -29,6 +29,7 @@ namespace WebDAV
 		std::string GetPath(std::string ppath1, std::string ppath2);
 		int Head(const char *path, void *buffer, int64_t len);
 		bool GetHeaders(const char *path, dict_t *headers);
+		WebDAV::Client *GetClient();
 
 	private:
 		int _Rmdir(const char *path);

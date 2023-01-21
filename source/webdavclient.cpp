@@ -13,7 +13,6 @@
 #include "windows.h"
 #include "util.h"
 #include "rtc.h"
-#include "dbglogger.h"
 
 #define MIN(X, Y) (((X) < (Y)) ? (X) : (Y))
 
@@ -346,7 +345,6 @@ namespace WebDAV
 
 		bool ret = client->download_range_to(path, buffer_ptr, buffer_size, 0, len - 1);
 		sprintf(response, "Http Code %ld", client->status_code());
-		dbglogger_log("buffer_size=%d, len=%d", buffer_size, len);
 		if (buffer_size != len)
 		{
 			return 0;
@@ -358,5 +356,10 @@ namespace WebDAV
 	bool WebDavClient::GetHeaders(const char *path, dict_t *headers)
 	{
 		return client->head(path, headers);
+	}
+
+	WebDAV::Client *WebDavClient::GetClient()
+	{
+		return this->client;
 	}
 }
