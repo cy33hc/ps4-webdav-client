@@ -1,4 +1,5 @@
 #include <SDL2/SDL.h>
+#include <orbis/SystemService.h>
 #include <stdio.h>
 #include <algorithm>
 #include <set>
@@ -993,6 +994,7 @@ namespace Windows
                     ImGui::PopTextWrapPos();
                 }
                 ImGui::EndPopup();
+                sceSystemServicePowerTick();
             }
         }
     }
@@ -1037,6 +1039,13 @@ namespace Windows
                     SetModalMode(false);
                     ImGui::CloseCurrentPopup();
                 }
+
+                if (ImGui::Checkbox("##auto_delete_tmp_pkg", &auto_delete_tmp_pkg))
+                {
+                    CONFIG::SaveConfig();
+                }
+                ImGui::SameLine();
+                ImGui::Text("%s", lang_strings[STR_AUTO_DELETE_TMP_PKG]);
 
                 ImGui::Separator();
                 for (int j = 0; j < MAX_FAVORITE_URLS; j++)

@@ -27,6 +27,7 @@
 #define MAX_FAVORITE_URLS 30
 
 #define CONFIG_LAST_SITE "last_site"
+#define CONFIG_AUTO_DELETE_TMP_PKG "auto_delete_tmp_pkg"
 
 #define CONFIG_LOCAL_DIRECTORY "local_directory"
 #define CONFIG_REMOTE_DIRECTORY "remote_directory"
@@ -53,6 +54,7 @@ extern WebDavSettings *webdav_settings;
 extern WebDAV::WebDavClient *webdavclient;
 extern char install_pkg_url[512];
 extern char favorite_urls[MAX_FAVORITE_URLS][512];
+extern bool auto_delete_tmp_pkg;
 
 namespace CONFIG
 {

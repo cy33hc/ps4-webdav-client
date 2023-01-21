@@ -232,7 +232,8 @@ namespace INSTALLER
 			bytes_to_download = progress_info.length;
 			bytes_transfered = progress_info.transferred;
 		}
-		FS::Rm(filename);
+		if (auto_delete_tmp_pkg)
+			FS::Rm(filename);
 		return 1;
 
 	err:

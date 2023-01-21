@@ -24,6 +24,7 @@ std::vector<std::string> sites;
 std::map<std::string, WebDavSettings> site_settings;
 char install_pkg_url[512];
 char favorite_urls[MAX_FAVORITE_URLS][512];
+bool auto_delete_tmp_pkg;
 
 namespace CONFIG
 {
@@ -48,6 +49,9 @@ namespace CONFIG
 
         sprintf(remote_directory, "%s", ReadString(CONFIG_GLOBAL, CONFIG_REMOTE_DIRECTORY, "/"));
         WriteString(CONFIG_GLOBAL, CONFIG_REMOTE_DIRECTORY, remote_directory);
+
+        auto_delete_tmp_pkg = ReadBool(CONFIG_GLOBAL, CONFIG_AUTO_DELETE_TMP_PKG, true);
+        WriteBool(CONFIG_GLOBAL, CONFIG_AUTO_DELETE_TMP_PKG, auto_delete_tmp_pkg);
 
         for (int i = 0; i < sites.size(); i++)
         {
@@ -90,6 +94,7 @@ namespace CONFIG
         WriteString(last_site, CONFIG_WEBDAV_SERVER_USER, webdav_settings->username);
         WriteString(last_site, CONFIG_WEBDAV_SERVER_PASSWORD, webdav_settings->password);
         WriteString(CONFIG_GLOBAL, CONFIG_LAST_SITE, last_site);
+        WriteBool(CONFIG_GLOBAL, CONFIG_AUTO_DELETE_TMP_PKG, auto_delete_tmp_pkg);
         WriteIniFile(CONFIG_INI_FILE);
         CloseIniFile();
     }

@@ -899,7 +899,7 @@ namespace Actions
                     sprintf(activity_message, "%s", lang_strings[STR_FAIL_INSTALL_TMP_PKG_MSG]);
                     sceKernelUsleep(5000000);
                 }
-                if (ret != -3)
+                if (ret != -3 && auto_delete_tmp_pkg)
                     FS::Rm(filename);
             }
         }
