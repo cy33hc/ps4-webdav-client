@@ -19,7 +19,7 @@ Remote Package Installation only works if the WebDAV server allow anonymous acce
  - Transfer files back and forth between PS4 and WebDAV server
  - Install packages from connected WebDAV server
  - Install packages from PS4 local drive
- - Install package from any URL
+ - Install package from Direct Links. Direct links are links that can be reached without being redirected to a webpage where it requires capthas or timers. Example of direct links are github release artifacts. Google shared links is the only exception since I could indirectly parse the webpage to obtain the direct links.
 
 ## Installation
 Copy the **ps4_webdav_client.pkg** in to a FAT32 format usb drive then install from package installer
