@@ -1159,12 +1159,14 @@ namespace Windows
             break;
         case ACTION_DELETE_LOCAL:
             activity_inprogess = true;
+            sprintf(activity_message, "%s", "");
             stop_activity = false;
             selected_action = ACTION_NONE;
             Actions::DeleteSelectedLocalFiles();
             break;
         case ACTION_DELETE_REMOTE:
             activity_inprogess = true;
+            sprintf(activity_message, "%s", "");
             stop_activity = false;
             selected_action = ACTION_NONE;
             Actions::DeleteSelectedRemotesFiles();
@@ -1251,18 +1253,21 @@ namespace Windows
             break;
         case ACTION_INSTALL_REMOTE_PKG:
             activity_inprogess = true;
+            sprintf(activity_message, "%s", "");
             stop_activity = false;
             Actions::InstallRemotePkgs();
             selected_action = ACTION_NONE;
             break;
         case ACTION_INSTALL_LOCAL_PKG:
             activity_inprogess = true;
+            sprintf(activity_message, "%s", "");
             stop_activity = false;
             Actions::InstallLocalPkgs();
             selected_action = ACTION_NONE;
             break;
         case ACTION_INSTALL_URL_PKG:
             activity_inprogess = true;
+            sprintf(activity_message, "%s", "");
             stop_activity = false;
             Actions::InstallUrlPkg();
             selected_action = ACTION_NONE;
