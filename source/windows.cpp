@@ -162,7 +162,7 @@ namespace Windows
     {
         ImGuiStyle *style = &ImGui::GetStyle();
         ImVec4 *colors = style->Colors;
-        static char title[32];
+        static char title[64];
         sprintf(title, "WebDAV %s", lang_strings[STR_CONNECTION_SETTINGS]);
         BeginGroupPanel(title, ImVec2(1905, 100));
         ImGui::SetCursorPosY(ImGui::GetCursorPosY() + 10);
@@ -224,7 +224,7 @@ namespace Windows
         ImGui::SetNextItemWidth(120);
         if (ImGui::BeginCombo("##Site", display_site, ImGuiComboFlags_PopupAlignLeft | ImGuiComboFlags_HeightLargest | ImGuiComboFlags_NoArrowButton))
         {
-            static char site_id[16];
+            static char site_id[64];
             for (int n = 0; n < sites.size(); n++)
             {
                 const bool is_selected = strcmp(sites[n].c_str(), last_site) == 0;
