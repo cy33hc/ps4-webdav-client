@@ -59,6 +59,7 @@ Traditional Chinese
 
 The following aren't standard languages supported by the PS4, therefore requires a config file update.
 ```
+Arabic
 Catalan
 Croatian
 Euskera
@@ -68,6 +69,7 @@ Hungarian
 Indonesian
 Ryukyuan
 Thai
+Turkish
 ```
 User must modify the file **/data/ps4-webdav-client/config.ini** located in the ps4 hard drive and update the **language** setting to with the **exact** values from the list above.
 
@@ -77,8 +79,6 @@ Finnish
 Swedish
 Danish
 Norwegian
-Turkish
-Arabic
 Czech
 Romanian
 Vietnamese
